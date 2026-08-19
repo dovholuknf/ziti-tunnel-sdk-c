@@ -59,11 +59,27 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The repository variable CI_STUB=1 skips the compile and fabricates the artifacts the downstream
+      # jobs download, so a run exercises this workflow's shape - job graph, matrix, gating, artifact
+      # names - in about a minute instead of fifteen. A repository variable rather than an env var
+      # because a called workflow does not inherit the caller's env. Set it on a fork, never upstream.
       - name: Run CMake Composite Action
+        if: vars.CI_STUB != '1'
         uses: ./.github/actions/build
         with:
           preset: ${{ matrix.preset }}
           target: bundle
+
+      - name: Stub the build
+        if: vars.CI_STUB == '1'
+        shell: bash
+        run: |
+          set -o errexit
+          mkdir -p ./build/bundle ./build/programs/ziti-edge-tunnel
+          echo "stub for ${{ matrix.preset }}" > ./build/programs/ziti-edge-tunnel/ziti-edge-tunnel
+          # the name the integration jobs unzip: ziti-edge-tunnel-<OS>_<arch>.zip
+          ( cd ./build/programs/ziti-edge-tunnel \
+            && zip -q ../../bundle/ziti-edge-tunnel-stub.zip ziti-edge-tunnel )
 
       - name: list bundle artifacts
         run: ls -R
