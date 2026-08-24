@@ -28,7 +28,8 @@ jobs:
           - { label: main-ha, cluster-size: "3", auth: OIDC }
     uses: ./.github/workflows/integration-tests.yml
     with:
-      ziti-ref: main
+      # LOOP BRANCH: the candidate fix for the non-replicated admin MFA removal
+      ziti-ref: fix-ha-admin-mfa-removal
       label: ${{ matrix.topology.label }}
       cluster-size: ${{ matrix.topology.cluster-size }}
       auth: ${{ matrix.topology.auth }}
