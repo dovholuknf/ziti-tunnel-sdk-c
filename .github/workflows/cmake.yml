@@ -17,38 +17,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # LOOP BRANCH: only the preset the Linux integration job downloads (zet-build: linux-x64).
         include:
-          - os: macos-15-intel
-            name: macOS x86_64
-            preset: macOS-x64
-
-          - os: macos-15
-            name: macOS arm64
-            preset: macOS-arm64
-
-          - os: windows-2022
-            name: Windows x86_64
-            preset: windows-x64-mingw
-
-          - os: windows-2022
-            name: Windows x86_64(win32crypto)
-            preset: windows-x64-win32crypto
-
-          - os: windows-2022
-            name: Windows arm64
-            preset: windows-arm64-vs2022
-
           - os: ubuntu-22.04
             name: Linux x86_64
             preset: linux-x64
-
-          - os: ubuntu-22.04
-            name: Linux arm
-            preset: linux-arm
-
-          - os: ubuntu-22.04
-            name: Linux arm64
-            preset: linux-arm64
 
     steps:
       - name: Debug action

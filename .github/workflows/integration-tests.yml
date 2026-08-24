@@ -69,22 +69,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # LOOP BRANCH: Linux only. adminRemovedMfa is controller-side and fails on every OS,
+        # so one runner samples it just as well and costs a third as much.
         os:
           - name: Linux x64
             runner: ubuntu-latest
             zet-build: linux-x64
             ziti-os: linux
             core-dir: /tmp/cores
-          - name: macOS arm64
-            runner: macos-15
-            zet-build: macOS-arm64
-            ziti-os: darwin
-            core-dir: /cores
-          - name: Windows x64
-            runner: windows-2022
-            zet-build: windows-x64-mingw
-            ziti-os: windows
-            core-dir: ""
     runs-on: ${{ matrix.os.runner }}
     steps:
       - name: Checkout

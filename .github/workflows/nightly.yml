@@ -6,9 +6,10 @@ on:
     - cron: "0 0 * * *"
   workflow_dispatch:
 
+# LOOP BRANCH: one scope per run so repeat dispatches do not cancel each other
 concurrency:
-  group: ${{ github.workflow }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   call-cmake-build:
@@ -23,9 +24,8 @@ jobs:
       fail-fast: false
       matrix:
         topology:
-          - { label: main, cluster-size: "", auth: OIDC }
+          # LOOP BRANCH: main-ha only, the only topology adminRemovedMfa fails on
           - { label: main-ha, cluster-size: "3", auth: OIDC }
-          - { label: main-legacy-auth, cluster-size: "", auth: Legacy }
     uses: ./.github/workflows/integration-tests.yml
     with:
       ziti-ref: main
@@ -35,30 +35,3 @@ jobs:
       slow-tests: true
     secrets: inherit
 
-  alert-mattermost:
-    name: Alert Mattermost on Failure
-    needs: [ call-cmake-build, integration-tests ]
-    if: failure()
-    runs-on: ubuntu-latest
-    env:
-      ZHOOK_URL: ${{ secrets.ZHOOK_URL_DEV_NOTIFICATIONS }}
-    steps:
-      - uses: openziti/ziti-mattermost-action-py@v1
-        if: env.ZHOOK_URL
-        with:
-          zitiId: ${{ secrets.ZITI_MATTERMOST_IDENTITY }}
-          webhookUrl: ${{ secrets.ZHOOK_URL_DEV_NOTIFICATIONS }}
-          eventJson: |
-            {
-              "action": "[ZET nightly integration tests against ziti main failed](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
-              "repository": {
-                "full_name": "${{ github.repository }}",
-                "html_url": "${{ github.server_url }}/${{ github.repository }}"
-              },
-              "sender": {
-                "login": "github-actions",
-                "html_url": "${{ github.server_url }}/${{ github.repository }}/actions",
-                "avatar_url": "https://github.com/github.png"
-              }
-            }
-          senderUsername: "GitHubZ"
