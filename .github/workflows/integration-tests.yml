@@ -189,8 +189,24 @@ jobs:
             echo "ZITI_BIN=$RUNNER_TEMP/ziti-cli/bin/$bin" >> "$GITHUB_ENV"
           fi
 
+      # The repository variable CI_STUB=1 stands the suite down and prints what it would have run, so a
+      # run exercises this workflow's shape without an overlay. Set it on a fork, never upstream.
+      - name: Stub the integration tests
+        if: vars.CI_STUB == '1'
+        shell: bash
+        env:
+          CLUSTER_SIZE: ${{ inputs.cluster-size }}
+          ZITI_AUTH: ${{ inputs.auth == '' && 'OIDC' || inputs.auth }}
+        run: |
+          echo "stub: would run the suite on ${{ matrix.os.name }}"
+          echo "  ziti:    ${{ inputs.ziti-version }}${{ inputs.ziti-ref }}"
+          echo "  label:   ${{ inputs.label }}"
+          echo "  cluster: ${CLUSTER_SIZE:-1}"
+          echo "  auth:    ${ZITI_AUTH}"
+          echo "  zet:     ${ZET_BIN:-unset}"
+
       - name: Run integration tests (Linux/macOS)
-        if: runner.os != 'Windows'
+        if: vars.CI_STUB != '1' && runner.os != 'Windows'
         shell: bash
         env:
           TEST_HOME: ${{ runner.temp }}
@@ -201,7 +217,7 @@ jobs:
         run: ./tests/integration/scripts/run-ci.sh --install-cert
 
       - name: Run integration tests (Windows)
-        if: runner.os == 'Windows'
+        if: vars.CI_STUB != '1' && runner.os == 'Windows'
         shell: pwsh
         env:
           TEST_HOME: ${{ runner.temp }}
